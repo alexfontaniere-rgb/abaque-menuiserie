@@ -1,0 +1,536 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+<meta name="theme-color" content="#2d5a0e">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Abaque">
+<link rel="manifest" href="./manifest.json">
+<title>Abaque Menuiserie</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+
+:root {
+  --vert-fonce: #2d5a0e;
+  --vert-moyen: #4a8a20;
+  --gris-bg: #f5f4f0;
+  --gris-carte: #ffffff;
+  --gris-bord: #d0cfc6;
+  --gris-thead: #e8e6df;
+  --gris-coin: #d8d6ce;
+  --gris-ligne: #c8c7be;
+  --gris-fort: #888780;
+  --texte: #1a1a18;
+  --texte-sec: #6b6a65;
+  --texte-ter: #9b9a96;
+  --bleu: #378ADD;
+}
+
+html, body {
+  height: 100%;
+  overflow: hidden;
+  background: var(--gris-bg);
+  font-family: system-ui, -apple-system, sans-serif;
+  color: var(--texte);
+  font-size: 14px;
+}
+
+/* ── LAYOUT GÉNÉRAL ── */
+.app {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  height: 100dvh;
+}
+
+/* ── HEADER ── */
+header {
+  background: var(--vert-fonce);
+  color: #fff;
+  padding: 10px 16px 8px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.25);
+  z-index: 10;
+}
+
+header h1 {
+  font-size: 15px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.btn-params {
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.35);
+  color: #fff;
+  border-radius: 6px;
+  padding: 5px 12px;
+  font-size: 13px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.btn-params:active { background: rgba(255,255,255,0.3); }
+
+.badge-tarif {
+  background: rgba(255,255,255,0.15);
+  border-radius: 20px;
+  padding: 3px 10px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.9);
+}
+
+/* ── PANNEAU PARAMÈTRES (drawer du bas) ── */
+.drawer-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 20;
+}
+.drawer-overlay.open { display: block; }
+
+.drawer {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  background: var(--gris-carte);
+  border-radius: 16px 16px 0 0;
+  padding: 0 16px 32px;
+  z-index: 21;
+  transform: translateY(100%);
+  transition: transform 0.28s cubic-bezier(.4,0,.2,1);
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.18);
+}
+.drawer.open { transform: translateY(0); }
+
+.drawer-handle {
+  width: 40px; height: 4px;
+  background: var(--gris-bord);
+  border-radius: 2px;
+  margin: 12px auto 16px;
+}
+
+.drawer-title {
+  font-size: 15px;
+  font-weight: 500;
+  margin-bottom: 18px;
+  color: var(--texte);
+}
+
+.param-row {
+  margin-bottom: 18px;
+}
+
+.param-label {
+  font-size: 12px;
+  color: var(--texte-sec);
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.param-val {
+  font-weight: 500;
+  font-size: 13px;
+  color: var(--texte);
+}
+
+input[type=range] {
+  width: 100%;
+  height: 36px;
+  accent-color: var(--vert-fonce);
+  cursor: pointer;
+}
+
+.param-bounds {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--texte-ter);
+  margin-top: 2px;
+}
+
+.mode-btns {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.mode-btn {
+  background: var(--gris-bg);
+  border: 1.5px solid var(--gris-bord);
+  border-radius: 8px;
+  padding: 8px 4px;
+  font-size: 11px;
+  color: var(--texte-sec);
+  cursor: pointer;
+  text-align: center;
+  line-height: 1.3;
+}
+
+.mode-btn.active {
+  background: #eaf3de;
+  border-color: var(--vert-moyen);
+  color: var(--vert-fonce);
+  font-weight: 500;
+}
+
+.btn-fermer {
+  width: 100%;
+  background: var(--vert-fonce);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 13px;
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  margin-top: 6px;
+}
+.btn-fermer:active { background: var(--vert-moyen); }
+
+/* ── LÉGENDE ── */
+.legende {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+  padding: 6px 12px;
+  background: #fff;
+  border-bottom: 1px solid var(--gris-bord);
+  flex-shrink: 0;
+}
+
+.leg-item {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--texte-sec);
+}
+
+.leg-swatch {
+  width: 12px; height: 12px;
+  border-radius: 2px;
+  border: 1px solid rgba(0,0,0,0.15);
+  flex-shrink: 0;
+}
+
+/* ── TABLEAU ── */
+.table-wrap {
+  flex: 1;
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+table {
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 11px;
+  width: max-content;
+}
+
+table th, table td {
+  border-right: 1px solid var(--gris-ligne);
+  border-bottom: 1px solid var(--gris-ligne);
+  padding: 8px 6px;
+  text-align: center;
+  white-space: nowrap;
+  min-width: 90px;
+}
+
+table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 3;
+  background: var(--gris-thead);
+  font-weight: 500;
+  font-size: 11px;
+  color: #4a4a46;
+  border-bottom: 2px solid var(--gris-fort);
+}
+
+table tbody th {
+  position: sticky;
+  left: 0;
+  z-index: 2;
+  background: var(--gris-thead);
+  font-weight: 500;
+  color: #4a4a46;
+  min-width: 100px;
+  border-right: 2px solid var(--gris-fort);
+  line-height: 1.3;
+}
+
+table thead th:first-child {
+  position: sticky;
+  top: 0; left: 0;
+  z-index: 4;
+  background: var(--gris-coin);
+  border-right: 2px solid var(--gris-fort);
+  border-bottom: 2px solid var(--gris-fort);
+  font-size: 9px;
+  color: var(--gris-fort);
+  min-width: 100px;
+}
+
+table tbody tr:active td { filter: brightness(0.88); }
+
+.cell-pv   { font-weight: 600; font-size: 12px; display: block; }
+.cell-coeff { font-size: 10px; display: block; margin-top: 1px; opacity: 0.82; }
+
+/* ── TOAST ── */
+.toast {
+  position: fixed;
+  bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: #222;
+  color: #fff;
+  padding: 9px 18px;
+  border-radius: 20px;
+  font-size: 13px;
+  opacity: 0;
+  transition: all 0.3s ease;
+  z-index: 30;
+  white-space: nowrap;
+}
+.toast.show {
+  transform: translateX(-50%) translateY(0);
+  opacity: 1;
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <header>
+    <div>
+      <h1>Abaque Menuiserie</h1>
+    </div>
+    <span class="badge-tarif" id="badge-tarif">114 €/h</span>
+    <button class="btn-params" id="btn-params">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+      Paramètres
+    </button>
+  </header>
+
+  <div class="legende">
+    <div class="leg-item"><span class="leg-swatch" style="background:#EAF3DE;"></span>Coeff &lt;2 — fourniture</div>
+    <div class="leg-item"><span class="leg-swatch" style="background:#E6F1FB;"></span>Coeff 2–4 — équilibré</div>
+    <div class="leg-item"><span class="leg-swatch" style="background:#FAEEDA;"></span>Coeff 4–8 — main-d'œuvre</div>
+    <div class="leg-item"><span class="leg-swatch" style="background:#FAECE7;"></span>Coeff &gt;8 — fort MO</div>
+  </div>
+
+  <div class="table-wrap">
+    <table id="abaque"></table>
+  </div>
+
+</div>
+
+<!-- Drawer paramètres -->
+<div class="drawer-overlay" id="overlay"></div>
+<div class="drawer" id="drawer">
+  <div class="drawer-handle"></div>
+  <div class="drawer-title">Paramètres</div>
+
+  <div class="param-row">
+    <div class="param-label">
+      <span>Coût horaire chargé (base)</span>
+      <span class="param-val" id="lbl-base">80 €/h</span>
+    </div>
+    <input type="range" id="sl-base" min="45" max="120" step="5" value="80">
+    <div class="param-bounds"><span>45 €/h</span><span>120 €/h</span></div>
+  </div>
+
+  <div class="param-row">
+    <div class="param-label">
+      <span>Marge souhaitée</span>
+      <span class="param-val" id="lbl-marge">30 %</span>
+    </div>
+    <input type="range" id="sl-marge" min="0" max="80" step="5" value="30">
+    <div class="param-bounds"><span>0 %</span><span>80 %</span></div>
+  </div>
+
+  <div class="param-row">
+    <div class="param-label"><span>Affichage des cellules</span></div>
+    <div class="mode-btns">
+      <button class="mode-btn active" data-mode="both">Prix<br>+ coeff</button>
+      <button class="mode-btn" data-mode="pv">Prix<br>uniquement</button>
+      <button class="mode-btn" data-mode="coeff">Coeff<br>uniquement</button>
+    </div>
+  </div>
+
+  <button class="btn-fermer" id="btn-fermer">Appliquer et fermer</button>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const ACHATS = [];
+for (let a = 250; a <= 15000; a += 250) ACHATS.push(a);
+
+const HEURES = [];
+for (let h = 4; h <= 40; h += 4) HEURES.push(h);
+
+const LABELS = {
+   4: '½ journée',  8: '1 journée',   12: '1 j ½',
+  16: '2 journées', 20: '2 j ½',      24: '3 journées',
+  28: '3 j ½',     32: '4 journées',  36: '4 j ½',
+  40: '5 journées'
+};
+
+let mode = 'both';
+
+function cellColor(c) {
+  if (c < 2) return { bg:'#EAF3DE', txt:'#2d5a0e' };
+  if (c < 4) return { bg:'#E6F1FB', txt:'#0c447c' };
+  if (c < 8) return { bg:'#FAEEDA', txt:'#7a4a08' };
+  return           { bg:'#FAECE7', txt:'#8a3018' };
+}
+
+function fmtA(a) {
+  return a >= 1000 ? (a/1000).toFixed(a%1000===0?0:2).replace('.',',')+' k€' : a+' €';
+}
+
+function fmtPv(pv) {
+  if (pv >= 1000) {
+    const k = pv/1000;
+    return k.toFixed(k%1===0?0:1).replace('.',',')+' k€';
+  }
+  return Math.round(pv)+' €';
+}
+
+function getTarif() {
+  const base  = parseFloat(document.getElementById('sl-base').value);
+  const marge = parseFloat(document.getElementById('sl-marge').value)/100;
+  return marge >= 1 ? base : base/(1-marge);
+}
+
+function updateBadge() {
+  const tf = getTarif();
+  document.getElementById('badge-tarif').textContent = Math.round(tf)+' €/h';
+}
+
+function build() {
+  updateBadge();
+  const tf  = getTarif();
+  const tbl = document.getElementById('abaque');
+  tbl.innerHTML = '';
+
+  const thead = document.createElement('thead');
+  const hrow  = document.createElement('tr');
+  const corner = document.createElement('th');
+  corner.innerHTML = '<span style="font-size:9px;color:#888780;">temps \\ achat</span>';
+  hrow.appendChild(corner);
+  ACHATS.forEach(a => {
+    const th = document.createElement('th');
+    th.innerHTML = '<span style="font-size:11px;font-weight:500;">'+fmtA(a)+'</span>';
+    hrow.appendChild(th);
+  });
+  thead.appendChild(hrow);
+  tbl.appendChild(thead);
+
+  const tbody = document.createElement('tbody');
+  HEURES.forEach(h => {
+    const tr = document.createElement('tr');
+    const rh = document.createElement('th');
+    rh.innerHTML =
+      '<span style="font-size:13px;font-weight:600;">'+h+'h</span><br>'+
+      '<span style="font-size:9px;color:#888780;">'+LABELS[h]+'</span>';
+    tr.appendChild(rh);
+
+    ACHATS.forEach(a => {
+      const pv    = a + h * tf;
+      const coeff = pv / a;
+      const {bg, txt} = cellColor(coeff);
+      const td = document.createElement('td');
+      td.style.background = bg;
+
+      if (mode === 'both') {
+        td.innerHTML =
+          '<span class="cell-pv" style="color:'+txt+'">'+fmtPv(pv)+'</span>'+
+          '<span class="cell-coeff" style="color:'+txt+'">×'+coeff.toFixed(2)+'</span>';
+      } else if (mode === 'pv') {
+        td.innerHTML = '<span class="cell-pv" style="color:'+txt+'">'+fmtPv(pv)+'</span>';
+      } else {
+        td.innerHTML = '<span class="cell-pv" style="color:'+txt+'">×'+coeff.toFixed(2)+'</span>';
+      }
+      tr.appendChild(td);
+    });
+    tbody.appendChild(tr);
+  });
+  tbl.appendChild(tbody);
+}
+
+/* ── Drawer ── */
+const drawer  = document.getElementById('drawer');
+const overlay = document.getElementById('overlay');
+
+document.getElementById('btn-params').addEventListener('click', () => {
+  drawer.classList.add('open');
+  overlay.classList.add('open');
+});
+
+function closeDrawer() {
+  drawer.classList.remove('open');
+  overlay.classList.remove('open');
+  build();
+}
+
+document.getElementById('btn-fermer').addEventListener('click', closeDrawer);
+overlay.addEventListener('click', closeDrawer);
+
+/* Sliders live */
+document.getElementById('sl-base').addEventListener('input', function() {
+  document.getElementById('lbl-base').textContent = this.value+' €/h';
+  updateBadge();
+});
+document.getElementById('sl-marge').addEventListener('input', function() {
+  document.getElementById('lbl-marge').textContent = this.value+' %';
+  updateBadge();
+});
+
+/* Boutons mode */
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', function() {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    this.classList.add('active');
+    mode = this.dataset.mode;
+  });
+});
+
+/* ── Service Worker ── */
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./sw.js').then(() => {
+    showToast('Mode hors-ligne activé');
+  }).catch(() => {});
+}
+
+/* ── Prompt install ── */
+let deferredPrompt;
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  deferredPrompt = e;
+  showToast('Installez l\'appli via le menu Chrome ⋮');
+});
+
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3200);
+}
+
+build();
+</script>
+</body>
+</html>
